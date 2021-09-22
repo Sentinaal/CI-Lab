@@ -118,10 +118,35 @@ void put(char *id, node_t *nptr) {
     }
     int hash = (int) hash_function(id);
     entry_t *new_entry = init_entry(id, nptr);
-    if(var_table -> entries[hash] == NULL)
+    if(var_table -> entries[hash] == NULL){
         var_table -> entries[hash] = new_entry;
+    }
+    else{
+        entry_t *current = var_table -> entries[hash];
+        while (current != NULL){
+            if(current -> next == NULL && strcmp(current -> id, id) != 0){
+                current -> next = new_entry;
+                new_entry -> next = NULL;
+                return;
+            }
+            else if(strcmp(current -> id, id) == 0){
+                new_entry -> next = current -> next;
+                delete_entry(current);
+                var_table -> entries[hash] = new_entry;
+                return;
+            }
+            else if(strcmp(current -> next -> id, id) == 0){
+                new_entry -> next = current -> next -> next;
+                delete_entry(current -> next);
+                current -> next = new_entry;
+                return;
+            }
+            else{
+                current = current -> next;
+            }
+        }
+    }
 }
-
 
 /* get() - search for an entry in the hashtable.
  * Parameter: Variable name.

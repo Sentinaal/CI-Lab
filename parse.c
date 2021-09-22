@@ -278,6 +278,6 @@ node_t *read_and_parse(void) {
 * (STUDENT TODO) */
 void cleanup(node_t *nptr) {
    // Is it enough to free the node the function called upon?
-   free(nptr);
+   //free(nptr);
    return;
 }
