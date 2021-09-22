@@ -15,7 +15,7 @@ SRCS := ci.c handle_args.c interface.c lex.c parse.c eval.c print.c err_handler.
 OBJS := $(SRCS:%.c=%.o)
 
 HDRS := ci.h node.h
-TESTS := tests/test_simple.txt
+TESTS := tests/test_string.txt
 
 # Generic rules
 

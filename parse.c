@@ -113,75 +113,73 @@ static node_t *build_leaf(void) {
 * Return value: pointer to an internal node
 * (STUDENT TODO) */
 static node_t *build_exp(void) {
-   // check running status
-   if (terminate || ignore_input) return NULL;
-  
+  // check running status
+  if (terminate || ignore_input) return NULL;
    token_t t;
- 
-   // The case of a leaf node is handled for you
-   if (this_token->ttype == TOK_NUM)
-       return build_leaf();
-   if (this_token->ttype == TOK_STR)
-       return build_leaf();
-   // handle the reserved identifiers, namely true and false
-   if (this_token->ttype == TOK_ID) {
-       if ((t = check_reserved_ids(this_token->repr)) != TOK_INVALID) {
-           this_token->ttype = t;
-       }
-       return build_leaf();
-   } else {
-       // (STUDENT TODO) implement the logic for internal nodes
-       node_t *inter = calloc(1, sizeof(node_t));
-       inter -> node_type = NT_INTERNAL;
-       inter -> type = NO_TYPE;
-       if(this_token -> ttype == TOK_LPAREN){
-           advance_lexer();
-           if(is_unop(this_token -> ttype)){
-               inter -> tok = this_token -> ttype;
-               advance_lexer();
-               inter -> children[0] = build_exp();
-               if(next_token  -> ttype != TOK_RPAREN){
-                        handle_error(ERR_SYNTAX);
-                }
-                advance_lexer();
-           }
-           else if (is_binop(next_token  -> ttype)){
-               inter -> children[0] = build_exp();
-               inter -> tok = next_token -> ttype;
-               advance_lexer();
-               advance_lexer();
-               inter-> children[1] = build_exp();
-               if(next_token -> ttype != TOK_RPAREN){
-                        handle_error(ERR_SYNTAX);
-                }
-                advance_lexer();
-           }
-           else if (next_token -> ttype == TOK_QUESTION){
-               inter -> children[0] = build_exp();
-               inter -> tok = next_token -> ttype;
-               advance_lexer();
-               advance_lexer();
-               if(next_token ->ttype != TOK_COLON){
-                   handle_error(ERR_SYNTAX);
+  // The case of a leaf node is handled for you
+  if (this_token->ttype == TOK_NUM)
+      return build_leaf();
+  if (this_token->ttype == TOK_STR)
+      return build_leaf();
+  // handle the reserved identifiers, namely true and false
+  if (this_token->ttype == TOK_ID) {
+      if ((t = check_reserved_ids(this_token->repr)) != TOK_INVALID) {
+          this_token->ttype = t;
+      }
+      return build_leaf();
+  } else {
+      // (STUDENT TODO) implement the logic for internal nodes
+      node_t *inter = calloc(1, sizeof(node_t));
+      inter -> node_type = NT_INTERNAL;
+      inter -> type = NO_TYPE;
+      if(this_token -> ttype == TOK_LPAREN){
+          advance_lexer();
+          inter -> children[0] = build_exp();
+          if(is_unop(this_token -> ttype)){
+              inter -> tok = this_token -> ttype;
+              advance_lexer();
+              inter -> children[0] = build_exp();
+              if(next_token  -> ttype != TOK_RPAREN){
+                       handle_error(ERR_SYNTAX);
                }
-               inter-> children[1] = build_exp();
                advance_lexer();
+          }
+          else if (is_binop(next_token  -> ttype)){
+              inter -> tok = next_token -> ttype;
+              advance_lexer();
+              advance_lexer();
+              inter-> children[1] = build_exp();
+              if(next_token -> ttype != TOK_RPAREN){
+                       handle_error(ERR_SYNTAX);
+               }
                advance_lexer();
-               inter-> children[2] = build_exp();
-               if(next_token -> ttype != TOK_RPAREN){
-                        handle_error(ERR_SYNTAX);
-                        return NULL;
-                }
-                advance_lexer();
-           }
-           else {
-               inter -> tok = TOK_IDENTITY;
+          }
+          else if (next_token -> ttype == TOK_QUESTION){
+              inter -> tok = next_token -> ttype;
+              advance_lexer();
+              advance_lexer();
+              if(next_token ->ttype != TOK_COLON){
+                  handle_error(ERR_SYNTAX);
+              }
+              inter-> children[1] = build_exp();
+              advance_lexer();
+              advance_lexer();
+              inter-> children[2] = build_exp();
+              if(next_token -> ttype != TOK_RPAREN){
+                       handle_error(ERR_SYNTAX);
+                       return NULL;
+               }
                advance_lexer();
-           }
-       }
-       return inter;
-    }
+          }
+          else {
+              inter -> tok = TOK_IDENTITY;
+              advance_lexer();
+          }
+      }
+      return inter;
+   }
 }
+
  
 /* build_root() - construct the root of the AST for the current input
 * This function is provided to you. Use it as a reference for your code
