@@ -35,26 +35,23 @@ static void infer_type(node_t *nptr) {
                 handle_error(ERR_UNDEFINED);
                 return;
             }
-            entry_t *test = calloc(1, sizeof(entry_t) + 1);
-            test = get(nptr-> val.sval);
-            if(get(nptr -> val.sval) -> type == STRING_TYPE){
-                nptr -> val.sval = malloc(strlen(nptr -> val.sval) +1);
-                nptr -> val.sval = get(nptr -> val.sval) -> val.sval;
-                nptr -> tok = TOK_STR;
+            entry_t *test = get(nptr-> val.sval);
+            nptr->type = test->type;
+            if(test -> type == STRING_TYPE){
+                nptr -> val.sval = calloc(1, strlen(nptr -> val.sval) + 1);
+                strcpy(nptr -> val.sval, test -> val.sval);
             }
-            if(get(nptr -> val.sval) -> type == INT_TYPE){
+            else if(test -> type == INT_TYPE){
                 nptr -> val.ival = test-> val.ival;
-            }
-            else if (test -> type == STRING_TYPE)
-            {
-                nptr -> val.sval = test-> val.sval;
             }
             else if (test -> type == BOOL_TYPE)
             {
                 nptr -> val.bval = test-> val.bval;
+            } else {
+                handle_error(ERR_TYPE);
             }
-            
         }
+        return;
     }
     
     infer_type(nptr -> children[0]);
