@@ -113,43 +113,13 @@ entry_t * init_entry(char *id, node_t *nptr) {
  */
 
 void put(char *id, node_t *nptr) {
-    printf("ID: %s \n", id);
+    if(nptr == NULL){
+        return;
+    }
     int hash = (int) hash_function(id);
-    entry_t *current = var_table -> entries[hash];
-    entry_t *previous;
     entry_t *new_entry = init_entry(id, nptr);
-
-    if(current == NULL){
+    if(var_table -> entries[hash] == NULL)
         var_table -> entries[hash] = new_entry;
-        new_entry -> next = NULL;
-        return;
-    }
-    else {
-        while (current != NULL){
-            if(strcmp(current -> id, id) == 0){
-                current -> type = nptr -> type;
-                if(current -> type == STRING_TYPE){
-                    current -> val.sval = malloc(strlen(nptr -> val.sval) + 1);
-                    strcpy(current -> val.sval, nptr -> val.sval);
-                }
-                else if(current -> type == INT_TYPE){
-                    current -> val.ival = nptr -> val.ival;
-                }
-                else if(current -> type == BOOL_TYPE){
-                    current -> val.bval = nptr -> val.bval;
-                }
-                return;
-            }
-            else{
-                previous = current;
-                current = current -> next;
-            }
-        }
-        current = new_entry;
-        previous -> next = current;
-        current -> next = NULL;
-        return;
-    }
 }
 
 
@@ -159,7 +129,7 @@ void put(char *id, node_t *nptr) {
  * (STUDENT TODO) 
  */
 entry_t* get(char* id) {
-    unsigned long hash = (int) hash_function(id);
+    int hash = (int) hash_function(id);
     entry_t *current = var_table -> entries[hash];
     while (current != NULL)
     {

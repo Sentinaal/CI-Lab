@@ -276,9 +276,9 @@ static void eval_node(node_t *nptr) {
         if(nptr -> children[0] -> type == INT_TYPE){
             nptr -> val.bval = (nptr -> children[0] -> val.ival < nptr -> children[1] -> val.ival);
         }
-        else if(nptr -> type == STRING_TYPE){
+        else if(nptr -> children[0] -> type == STRING_TYPE){
             int comparator = strcmp(nptr -> children[0] -> val.sval, nptr -> children[1] -> val.sval);
-            nptr -> val.bval = (comparator < 0) ? true : false;
+            nptr -> val.bval = (comparator < 0);
         }
         break;
     case TOK_GT:
@@ -287,7 +287,7 @@ static void eval_node(node_t *nptr) {
         }
          else if(nptr -> children[0] -> type == STRING_TYPE){
             int comparator = strcmp(nptr -> children[0] -> val.sval, nptr -> children[1] -> val.sval);
-            nptr -> val.bval = (comparator > 0) ? true : false;
+            nptr -> val.bval = (comparator > 0);
         }
         break;
 
