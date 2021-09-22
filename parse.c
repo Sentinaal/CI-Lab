@@ -155,7 +155,7 @@ static node_t *build_exp(void) {
                   advance_lexer();
                   inter -> children[1] = build_exp();
                   if(next_token ->ttype != TOK_COLON){
-                  handle_error(ERR_SYNTAX);
+                      handle_error(ERR_SYNTAX);
                   }
                   advance_lexer();
                   advance_lexer();

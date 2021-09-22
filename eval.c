@@ -220,9 +220,7 @@ static void eval_node(node_t *nptr) {
         }
     case TOK_UMINUS:
         if(nptr -> type == INT_TYPE){
-            if(nptr -> children[0] != 0){
-                nptr -> val.ival = (-(nptr -> children[0] -> val.ival));
-            }
+            nptr -> val.ival = (nptr -> children[0] -> val.ival - ((nptr-> children[0] -> val.ival *2)));
         }
         else if (nptr -> type == STRING_TYPE){
             nptr -> val.sval = strrev(nptr -> children[0] -> val.sval);
