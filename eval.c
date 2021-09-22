@@ -37,12 +37,15 @@ static void infer_type(node_t *nptr) {
             }
             entry_t *test = calloc(1, sizeof(entry_t) + 1);
             test = get(nptr-> val.sval);
-            if(get(nptr -> val.sval) -> type == STRING_TYPE){
+            printf("TEST VAL: %d \n", test->val.ival);
+            printf("TEST NAME: %s \n", test->id);
+
+            if(test -> type == STRING_TYPE) {
                 nptr -> val.sval = malloc(strlen(nptr -> val.sval) +1);
                 nptr -> val.sval = get(nptr -> val.sval) -> val.sval;
                 nptr -> tok = TOK_STR;
             }
-            if(get(nptr -> val.sval) -> type == INT_TYPE){
+            if(test -> type == INT_TYPE){
                 nptr -> val.ival = test-> val.ival;
             }
             else if (test -> type == STRING_TYPE)
@@ -175,14 +178,23 @@ static void eval_node(node_t *nptr) {
    if (nptr == NULL) return;
    if (terminate || ignore_input) return;
  
-   if(nptr->node_type == NT_LEAF){
+   if(nptr->node_type == NT_LEAF) {
        return;
    }
    else if(nptr -> type == NO_TYPE){
        logging(ERR_SYNTAX, "node has type NOTYPE");
    }
    eval_node(nptr->children[0]);
-   eval_node(nptr->children[1]);
+   if(nptr -> tok == TOK_QUESTION){
+       if(nptr -> children[0] -> val.bval){
+           eval_node(nptr-> children[1]);
+       }else{
+           eval_node(nptr->children[2]);
+       }
+   }
+   else{
+       eval_node(nptr->children[1]);
+   }
  
    switch (nptr -> tok)
    {
@@ -200,6 +212,7 @@ static void eval_node(node_t *nptr) {
        }
        break;
     case TOK_IDENTITY:
+        printf("EVAL CASE GOOD \n");
         if(nptr -> children[0] -> type == INT_TYPE){
             nptr -> val.ival = nptr -> children[0] -> val.ival;
         }
@@ -345,6 +358,7 @@ void eval_root(node_t *nptr) {
            logging(LOG_ERROR, "failed to find child node");
            return;
        }
+       printf("variable name: %s \n", nptr->children[0]->val.sval);
        put(nptr->children[0]->val.sval, nptr->children[1]);
        return;
    }
