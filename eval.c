@@ -195,6 +195,18 @@ static void eval_node(node_t *nptr) {
    switch (nptr -> tok)
    {
     //BINARY OPERATORS
+    case TOK_IDENTITY:
+        if(nptr -> children[0] -> type == INT_TYPE){
+            nptr -> val.ival = nptr -> children[0] -> val.ival;
+        }
+        else if(nptr -> children[0] -> type == STRING_TYPE){
+            char *string = calloc(1, strlen(nptr -> children[0] -> val.sval));
+            strcpy(string, nptr -> children[0] -> val.sval);
+            nptr -> val.sval = string;
+        }
+        else if(nptr -> children[0] -> type == BOOL_TYPE){
+            nptr -> val.bval = nptr -> children[0] -> val.bval;
+        }
    case TOK_PLUS:
        if(nptr -> tok == TOK_PLUS){
            if(nptr -> type == INT_TYPE){
@@ -207,20 +219,11 @@ static void eval_node(node_t *nptr) {
            }
        }
        break;
-    case TOK_IDENTITY:
-        if(nptr -> children[0] -> type == INT_TYPE){
-            nptr -> val.ival = nptr -> children[0] -> val.ival;
-        }
-        else if(nptr -> children[0] -> type == STRING_TYPE){
-            nptr-> val.sval = malloc(strlen(nptr -> children[0] -> val.sval) +1);
-            nptr -> val.sval = nptr -> children[0] -> val.sval;
-        }
-        else if(nptr -> children[0] -> type == BOOL_TYPE){
-            nptr -> val.bval = nptr -> children[0] -> val.bval;
-        }
     case TOK_UMINUS:
         if(nptr -> type == INT_TYPE){
-            nptr -> val.ival = (nptr -> children[0] -> val.ival - ((nptr-> children[0] -> val.ival *2)));
+            if(nptr -> children[0] != 0){
+                nptr -> val.ival = (-(nptr -> children[0] -> val.ival));
+            }
         }
         else if (nptr -> type == STRING_TYPE){
             nptr -> val.sval = strrev(nptr -> children[0] -> val.sval);
