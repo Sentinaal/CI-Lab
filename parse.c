@@ -64,33 +64,45 @@ static token_t check_reserved_ids(char *s) {
 * Return value: pointer to a leaf node
 * (STUDENT TODO) */
 static node_t *build_leaf(void) {
-   if (terminate || ignore_input) return NULL;
-   node_t *leaf = (node_t *) calloc(1, sizeof(node_t));
-   if (! leaf) {
+    if (terminate || ignore_input) return NULL;
+    node_t *leaf = calloc(1, sizeof(node_t));
+    if (! leaf) {
        // calloc returns NULL if memory allocation fails
        logging(LOG_FATAL, "failed to allocate node");
        return NULL;
    }
-   leaf->tok = this_token->ttype;
-   leaf->node_type = NT_LEAF;
-   switch (this_token->ttype ){
+
+   leaf -> tok = this_token->ttype;
+   leaf -> node_type = NT_LEAF;
+
+   switch (this_token -> ttype){
        case TOK_NUM:
-           leaf -> type = INT_TYPE;
-           leaf -> val.ival = atoi(this_token->repr);
-           break;
-       case TOK_TRUE:
-           leaf -> type = BOOL_TYPE;
-           leaf -> val.bval = true;
-           break;
-       case TOK_FALSE:
-           leaf -> type = BOOL_TYPE;
-           leaf -> val.bval = false;
-           break;
-       case TOK_STR:
-           leaf -> type = STRING_TYPE;
-           break;
-       default:
-           break;
+            leaf -> type = INT_TYPE;
+            leaf -> val.ival = atoi(this_token ->repr);
+            break;
+        case TOK_TRUE:
+            leaf -> type = BOOL_TYPE;
+            leaf -> val.bval = true;
+            break;
+        case TOK_FALSE:
+            leaf -> type = BOOL_TYPE;
+            leaf -> val.bval = false;
+            break;
+        case TOK_STR:
+            leaf -> type = STRING_TYPE;
+            leaf -> val.sval = malloc(strlen(this_token -> repr) + 1);
+            strcpy(leaf -> val.sval, this_token -> repr);
+            break;
+         case TOK_ID:
+            leaf -> type = ID_TYPE;
+            leaf -> val.sval = malloc(strlen(this_token -> repr) + 1);
+            strcpy(leaf -> val.sval, this_token -> repr);
+            break;
+        case TOK_FMT_SPEC:
+            leaf -> type = FMT_TYPE;
+            leaf -> val.fval = this_token -> repr[0];
+        default:
+            break;
    }
    return leaf;
 }
@@ -119,34 +131,56 @@ static node_t *build_exp(void) {
        return build_leaf();
    } else {
        // (STUDENT TODO) implement the logic for internal nodes
-       node_t *inter = (node_t *) calloc(1, sizeof(node_t));
-       if (! inter) {
-       // malloc returns NULL if memory allocation fails
-           logging(LOG_FATAL, "failed to allocate node");
-           return NULL;
-       }
+       node_t *inter = calloc(1, sizeof(node_t));
        inter -> node_type = NT_INTERNAL;
-       //check for left paren
-      if(this_token -> ttype == TOK_LPAREN){
+       inter -> type = NO_TYPE;
+       if(this_token -> ttype == TOK_LPAREN){
            advance_lexer();
-           //build left tree
-           inter -> children[0] = build_exp();
-           if(is_binop(next_token -> ttype)){
+           if(is_unop(this_token -> ttype)){
+               inter -> tok = this_token -> ttype;
+               advance_lexer();
+               inter -> children[0] = build_exp();
+               if(next_token  -> ttype != TOK_RPAREN){
+                        handle_error(ERR_SYNTAX);
+                }
+                advance_lexer();
+           }
+           else if (is_binop(next_token  -> ttype)){
+               inter -> children[0] = build_exp();
                inter -> tok = next_token -> ttype;
                advance_lexer();
                advance_lexer();
+               inter-> children[1] = build_exp();
+               if(next_token -> ttype != TOK_RPAREN){
+                        handle_error(ERR_SYNTAX);
+                }
+                advance_lexer();
            }
-           inter -> children[1] = build_exp();
-           advance_lexer();
- 
-           if (this_token -> ttype != TOK_RPAREN)
-           {
-               handle_error(ERR_SYNTAX);
-               return NULL;
+           else if (next_token -> ttype == TOK_QUESTION){
+               inter -> children[0] = build_exp();
+               inter -> tok = next_token -> ttype;
+               advance_lexer();
+               advance_lexer();
+               if(next_token ->ttype != TOK_COLON){
+                   handle_error(ERR_SYNTAX);
+               }
+               inter-> children[1] = build_exp();
+               advance_lexer();
+               advance_lexer();
+               inter-> children[2] = build_exp();
+               if(next_token -> ttype != TOK_RPAREN){
+                        handle_error(ERR_SYNTAX);
+                        return NULL;
+                }
+                advance_lexer();
+           }
+           else {
+               inter -> tok = TOK_IDENTITY;
+               advance_lexer();
            }
        }
        return inter;
-   }
+    }
 }
  
 /* build_root() - construct the root of the AST for the current input
@@ -194,7 +228,7 @@ static node_t *build_root(void) {
    if (next_token->ttype == TOK_EOL)
        return ret;
    else {                                    
-   /* At this point, we've finished building the main expression. The only
+   /* At this point, we've finished  building the main expression. The only
     * syntactically valid tokens that could remain would be format specifiers */   
       
        // check that our next token is a format specifier

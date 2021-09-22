@@ -112,7 +112,37 @@ entry_t * init_entry(char *id, node_t *nptr) {
  */
 
 void put(char *id, node_t *nptr) {
-    return;
+    unsigned long hash = (int) hash_function(id);
+    entry_t *current = var_table -> entries[hash];
+    entry_t *previous;
+
+    if(current == NULL){
+        var_table -> entries[hash] = init_entry(id, nptr);
+        return;
+    }
+    else {
+        while (current != NULL){
+            if(strcmp(current -> id, id) == 0){
+                current -> type = nptr -> type;
+                if(current -> type == STRING_TYPE){
+                    current -> val.sval = malloc(strlen(nptr -> val.sval) + 1);
+                    current -> val.sval = nptr -> val.sval;
+                }
+                else if(current -> type == INT_TYPE){
+                    current -> val.ival = nptr -> val.ival;
+                }
+                return;
+            }
+            else{
+                previous = current;
+                current = current -> next;
+            }
+        }
+        current = init_entry(id, nptr);
+        previous -> next = current;
+        current -> next = NULL;
+        return;
+    }
 }
 
 /* get() - search for an entry in the hashtable.
@@ -121,6 +151,17 @@ void put(char *id, node_t *nptr) {
  * (STUDENT TODO) 
  */
 entry_t* get(char* id) {
+    unsigned long hash = (int) hash_function(id);
+    entry_t *current = var_table -> entries[hash];
+    while (current != NULL)
+    {
+        if(strcmp(id, current-> id) == 0){
+            return current;
+        }
+        else{
+            current = current -> next;
+        }
+    }
     return NULL;
 }
 
