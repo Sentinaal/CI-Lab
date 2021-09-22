@@ -37,15 +37,12 @@ static void infer_type(node_t *nptr) {
             }
             entry_t *test = calloc(1, sizeof(entry_t) + 1);
             test = get(nptr-> val.sval);
-            printf("TEST VAL: %d \n", test->val.ival);
-            printf("TEST NAME: %s \n", test->id);
-
-            if(test -> type == STRING_TYPE) {
+            if(get(nptr -> val.sval) -> type == STRING_TYPE){
                 nptr -> val.sval = malloc(strlen(nptr -> val.sval) +1);
                 nptr -> val.sval = get(nptr -> val.sval) -> val.sval;
                 nptr -> tok = TOK_STR;
             }
-            if(test -> type == INT_TYPE){
+            if(get(nptr -> val.sval) -> type == INT_TYPE){
                 nptr -> val.ival = test-> val.ival;
             }
             else if (test -> type == STRING_TYPE)
@@ -176,19 +173,18 @@ static void infer_root(node_t *nptr) {
 //store result in this node
 static void eval_node(node_t *nptr) {
    if (nptr == NULL) return;
-   if (terminate || ignore_input) return;
- 
-   if(nptr->node_type == NT_LEAF) {
+   else if(nptr->node_type == NT_LEAF){
        return;
    }
    else if(nptr -> type == NO_TYPE){
        logging(ERR_SYNTAX, "node has type NOTYPE");
    }
+
    eval_node(nptr->children[0]);
    if(nptr -> tok == TOK_QUESTION){
        if(nptr -> children[0] -> val.bval){
-           eval_node(nptr-> children[1]);
-       }else{
+           eval_node(nptr -> children[1]);
+       } else{
            eval_node(nptr->children[2]);
        }
    }
@@ -212,7 +208,6 @@ static void eval_node(node_t *nptr) {
        }
        break;
     case TOK_IDENTITY:
-        printf("EVAL CASE GOOD \n");
         if(nptr -> children[0] -> type == INT_TYPE){
             nptr -> val.ival = nptr -> children[0] -> val.ival;
         }
@@ -232,13 +227,16 @@ static void eval_node(node_t *nptr) {
         }
         else if(nptr -> type == STRING_TYPE){
             int count = nptr -> children[1] -> val.ival;
-            char *new_space = calloc(1, (nptr -> children[1] -> val.ival) * strlen(nptr -> children[0] -> val.sval) +1);
-            if(count > 0){
-                for(int i = 0; i < nptr -> children[1] -> val.ival; i++){
-                    strcat(new_space, nptr -> children[0] -> val.sval);
+            if(count < 0){
+                handle_error(ERR_EVAL);
+            }
+            nptr-> val.sval = malloc(strlen(nptr -> children[0] -> val.sval) * nptr -> children[1] -> val.ival +1);
+            if(count >0){
+                strcpy(nptr-> val.sval, nptr -> children [0] -> val.sval);
+                for(int i = 1; i < count; i++){
+                    strcat(nptr -> val.sval, nptr -> children[0] -> val.sval);
                 }
             }
-            nptr-> val.sval = new_space;
         }
         break;
     case TOK_DIV:
@@ -294,27 +292,25 @@ static void eval_node(node_t *nptr) {
         break;
     
     case TOK_QUESTION:
-        if(nptr -> type == INT_TYPE){
-            if(nptr -> children[0] -> val.bval){
+        if(nptr -> children [0] -> val.bval){
+            if(nptr -> type == INT_TYPE){
                 nptr -> val.ival = nptr -> children[1] -> val.ival;
             }
-            else{
-                nptr -> val.ival = nptr -> children[2] -> val.ival;
+            else if (nptr -> type == STRING_TYPE){
+                nptr -> val.sval = nptr ->children[1] -> val.sval;
             }
-        }
-        else if(nptr -> type == STRING_TYPE){
-            if(nptr -> children[0] -> val.bval){
-                nptr -> val.sval = nptr -> children[1] -> val.sval;
-            }
-            else{
-                nptr -> val.sval = nptr -> children[2] -> val.sval;
-            }
-        }
-        else if(nptr -> type == BOOL_TYPE){
-            if(nptr -> children[0] -> val.bval){
+            else if(nptr -> type == BOOL_TYPE){
                 nptr -> val.bval = nptr -> children[1] -> val.bval;
             }
-            else{
+        }
+        else{
+            if(nptr -> type == INT_TYPE){
+                nptr -> val.ival = nptr -> children[2] -> val.ival;
+            }
+            else if (nptr -> type == STRING_TYPE){
+                nptr -> val.sval = nptr ->children[2] -> val.sval;
+            }
+            else if(nptr -> type == BOOL_TYPE){
                 nptr -> val.bval = nptr -> children[2] -> val.bval;
             }
         }
@@ -328,9 +324,7 @@ static void eval_node(node_t *nptr) {
         }
         break;
     case TOK_NOT:
-        if(nptr -> type == BOOL_TYPE){
-            nptr -> val.bval = (nptr -> children[0] -> val.bval) ? false : true;
-        }
+        nptr -> val.bval = (nptr -> children[0] -> val.bval) ? false : true;
         break;
     default:
         break;
@@ -358,7 +352,6 @@ void eval_root(node_t *nptr) {
            logging(LOG_ERROR, "failed to find child node");
            return;
        }
-       printf("variable name: %s \n", nptr->children[0]->val.sval);
        put(nptr->children[0]->val.sval, nptr->children[1]);
        return;
    }
@@ -396,7 +389,7 @@ void infer_and_eval(node_t *nptr) {
 /* strrev() - helper function to reverse a given string
 * Parameter: The string to reverse.
 * Return value: The reversed string. The input string is not modified.
-* (STUDENT TODO)
+* (STUDENT TODO
 */
  
 char *strrev(char *str) {

@@ -64,7 +64,6 @@ static token_t check_reserved_ids(char *s) {
 * Return value: pointer to a leaf node
 * (STUDENT TODO) */
 static node_t *build_leaf(void) {
-    if (terminate || ignore_input) return NULL;
     node_t *leaf = calloc(1, sizeof(node_t));
     if (! leaf) {
        // calloc returns NULL if memory allocation fails
@@ -72,10 +71,11 @@ static node_t *build_leaf(void) {
        return NULL;
    }
 
-   leaf -> tok = this_token->ttype;
    leaf -> node_type = NT_LEAF;
+   leaf -> tok = this_token->ttype;
+   
 
-   switch (this_token -> ttype){
+   switch (leaf -> tok){
        case TOK_NUM:
             leaf -> type = INT_TYPE;
             leaf -> val.ival = atoi(this_token ->repr);
@@ -95,9 +95,8 @@ static node_t *build_leaf(void) {
             break;
          case TOK_ID:
             leaf -> type = ID_TYPE;
-            leaf -> val.sval = (char*) malloc(strlen(this_token -> repr) + 1);
+            leaf -> val.sval = malloc(strlen(this_token -> repr) + 1);
             strcpy(leaf -> val.sval, this_token -> repr);
-            printf("STORED STRING: %s \n", leaf->val.sval);
             break;
         case TOK_FMT_SPEC:
             leaf -> type = FMT_TYPE;
@@ -133,7 +132,7 @@ static node_t *build_exp(void) {
       node_t *inter = calloc(1, sizeof(node_t));
       inter -> node_type = NT_INTERNAL;
       inter -> type = NO_TYPE;
-      if(this_token -> ttype == TOK_LPAREN) {
+      if(this_token -> ttype == TOK_LPAREN){
           advance_lexer();
           if(is_unop(this_token -> ttype)){
               inter -> tok = this_token -> ttype;
@@ -141,41 +140,40 @@ static node_t *build_exp(void) {
               inter -> children[0] = build_exp();
               advance_lexer();
             }
-            else {
-                inter -> children[0] = build_exp();
-                printf("STORED CHILDREN VAL: %d \n", inter -> children[0] -> val.ival);
-                if (is_binop(next_token  -> ttype)){
-                    inter -> tok = next_token -> ttype;
-                    advance_lexer();
-                    advance_lexer();
-                    inter-> children[1] = build_exp();
-                    advance_lexer();
-                } else if(next_token -> ttype == TOK_QUESTION){
-                    inter -> tok = next_token -> ttype;
-                    advance_lexer();
-                    advance_lexer();
-                    inter -> children[1] = build_exp();
-                    if(next_token -> ttype != TOK_COLON){
-                        handle_error(ERR_SYNTAX);
-                    }
-                    advance_lexer();
-                    advance_lexer();
-                    inter -> children[2] = build_exp();
-                    advance_lexer();
+          else{
+              inter -> children[0] = build_exp();
+              if(is_binop(next_token  -> ttype)){
+                  inter -> tok = next_token -> ttype--;
+                  advance_lexer();
+                  advance_lexer();
+                  inter->children[1] = build_exp();
+                  advance_lexer();
+              }
+              else if(next_token -> ttype == TOK_QUESTION){
+                  inter -> tok = next_token -> ttype;
+                  advance_lexer();
+                  advance_lexer();
+                  inter -> children[1] = build_exp();
+                  if(next_token ->ttype != TOK_COLON){
+                  handle_error(ERR_SYNTAX);
+                  }
+                  advance_lexer();
+                  advance_lexer();
+                  inter -> children[2] = build_exp();
+                  advance_lexer();
                 }
                 else{
                     inter -> tok = TOK_IDENTITY;
                     advance_lexer();
-                    printf("STORED VALUE: %s \n", inter -> val.sval);
                 }
             }
         }
-        if(this_token -> ttype != TOK_RPAREN){
+        if(this_token->ttype != TOK_RPAREN){
             handle_error(ERR_SYNTAX);
             return NULL;
         }
         return inter;
-   }
+    }
 }
 
  
@@ -184,7 +182,6 @@ static node_t *build_exp(void) {
 * Parameter: none
 * Return value: the root of the AST */
 static node_t *build_root(void) {
-    printf("GOOD \n");
    // check running status
    if (terminate || ignore_input) return NULL;
  
@@ -202,30 +199,24 @@ static node_t *build_root(void) {
  
    // (EEL-2) check for variable assignment
    if (this_token->ttype == TOK_ID && next_token->ttype == TOK_ASSIGN) {
-       printf("VERY GOOD \n");
        if (check_reserved_ids(this_token->repr) != TOK_INVALID) {
            logging(LOG_ERROR, "variable name is reserved");
            return ret;
        }
        ret->type = ID_TYPE;
        ret->children[0] = build_leaf();
-       printf("BUILT LEAF1 \n");
        advance_lexer();
        advance_lexer();
        ret->children[1] = build_exp();
        if (next_token->ttype != TOK_EOL) {
            handle_error(ERR_SYNTAX);
        }
-       printf("STORED VALUE: %s \n", ret -> children[0] -> val.sval);
-       printf("STORED CHILDREN VAL: %d \n", ret -> children[1] -> val.ival);
-       
        return ret;
    }
   
    // build an expression based on the current token
    // this will be where the majority of the tree is recursively constructed
    ret->children[0] = build_exp();
-   printf("A IS: %d \n", ret->children[0]->tok);
  
    // if the next token is End of Line, we're done
    if (next_token->ttype == TOK_EOL)
