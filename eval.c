@@ -218,6 +218,16 @@ static void eval_node(node_t *nptr) {
         else if(nptr -> children[0] -> type == BOOL_TYPE){
             nptr -> val.bval = nptr -> children[0] -> val.bval;
         }
+    case TOK_UMINUS:
+        if(nptr -> type == INT_TYPE){
+            if(nptr -> children[0] != 0){
+                nptr -> val.ival = (-(nptr -> children[0] -> val.ival));
+            }
+        }
+        else if (nptr -> type == STRING_TYPE){
+            nptr -> val.sval = strrev(nptr -> children[0] -> val.sval);
+        }
+        break;
     case TOK_BMINUS:
         nptr-> val.ival = nptr->children[0]-> val.ival - nptr->children[1]->val.ival;
         break;
@@ -266,11 +276,10 @@ static void eval_node(node_t *nptr) {
             nptr -> val.bval = (nptr -> children[0] -> val.ival < nptr -> children[1] -> val.ival);
         }
         else if(nptr -> type == STRING_TYPE){
-            int comparator = strcmp(nptr -> children[1] -> val.sval, nptr -> children[0] -> val.sval);
+            int comparator = strcmp(nptr -> children[0] -> val.sval, nptr -> children[1] -> val.sval);
             nptr -> val.bval = (comparator < 0) ? true : false;
         }
         break;
-
     case TOK_GT:
         if(nptr -> children[0] -> type == INT_TYPE){
             nptr -> val.bval = (nptr -> children[0] -> val.ival > nptr -> children[1] -> val.ival);
@@ -313,14 +322,6 @@ static void eval_node(node_t *nptr) {
             else if(nptr -> type == BOOL_TYPE){
                 nptr -> val.bval = nptr -> children[2] -> val.bval;
             }
-        }
-        break;
-    case TOK_UMINUS:
-        if(nptr -> type == INT_TYPE){
-            nptr -> val.ival = (nptr -> children[0] -> val.ival - ((nptr-> children[0] -> val.ival *2)));
-        }
-        else if (nptr -> type == STRING_TYPE){
-            nptr -> val.sval = strrev(nptr -> children[0] -> val.sval);
         }
         break;
     case TOK_NOT:

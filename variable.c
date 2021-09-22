@@ -113,12 +113,15 @@ entry_t * init_entry(char *id, node_t *nptr) {
  */
 
 void put(char *id, node_t *nptr) {
-    unsigned long hash = (long) hash_function(id);
+    printf("ID: %s \n", id);
+    int hash = (int) hash_function(id);
     entry_t *current = var_table -> entries[hash];
     entry_t *previous;
+    entry_t *new_entry = init_entry(id, nptr);
 
     if(current == NULL){
-        var_table -> entries[hash] = init_entry(id, nptr);
+        var_table -> entries[hash] = new_entry;
+        new_entry -> next = NULL;
         return;
     }
     else {
@@ -127,7 +130,7 @@ void put(char *id, node_t *nptr) {
                 current -> type = nptr -> type;
                 if(current -> type == STRING_TYPE){
                     current -> val.sval = malloc(strlen(nptr -> val.sval) + 1);
-                    current -> val.sval = nptr -> val.sval;
+                    strcpy(current -> val.sval, nptr -> val.sval);
                 }
                 else if(current -> type == INT_TYPE){
                     current -> val.ival = nptr -> val.ival;
@@ -142,12 +145,13 @@ void put(char *id, node_t *nptr) {
                 current = current -> next;
             }
         }
-        current = init_entry(id, nptr);
+        current = new_entry;
         previous -> next = current;
         current -> next = NULL;
         return;
     }
 }
+
 
 /* get() - search for an entry in the hashtable.
  * Parameter: Variable name.
